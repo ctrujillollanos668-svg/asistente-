@@ -1,0 +1,6 @@
+{
+  "version": "1.0.1",
+  "apkUrl": "https://github.com/tu-usuario/tu-repo/releases/download/v1.0.1/app-release.apk",
+  "changelog": "• Soporte para control de más aplicaciones con autorización.\n• Mejoras en la precisión del reconocimiento de voz.\n• Corrección de errores y optimizaciones.",
+  "mandatory": false
+}
