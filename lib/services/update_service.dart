@@ -24,7 +24,7 @@ class AppUpdateInfo {
 class UpdateService {
   // URL oficial para consultar actualizaciones en GitHub
   static const String defaultCheckUrl =
-      "https://raw.githubusercontent.com/ctrujillollanos668-svg/asistente/main/version.json";
+      "https://raw.githubusercontent.com/ctrujillollanos668-svg/asistente-/main/version.json";
 
   /// Obtiene la versión actual instalada en el dispositivo
   static Future<String> getCurrentVersion() async {
