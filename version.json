@@ -1,6 +1,6 @@
 {
   "version": "1.0.1",
   "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.1/app-release.apk",
-  "changelog": "• Reconocimiento de voz continuo y activación por nombre estilo Siri.\n• Nombre personalizable (Jarvis, Siri, Viernes, etc.).\n• Permisos permanentes de una sola vez para abrir aplicaciones.\n• Mejoras generales de estabilidad.",
+  "changelog": "• Apertura inteligente de WhatsApp (reconoce jerga 'whap', 'wasap', 'chat' y contactos como 'mamá').\n• Reconocimiento de voz continuo y activación por nombre estilo Siri.\n• Permisos permanentes de una sola vez para abrir aplicaciones.\n• Mejoras generales de estabilidad.",
   "mandatory": false
 }

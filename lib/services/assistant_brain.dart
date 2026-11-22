@@ -90,12 +90,28 @@ class AssistantBrain {
     // 3. Detección de Intent para abrir Aplicaciones
     final appAction = _detectAppAction(effectiveInput);
     if (appAction != null) {
-      // Verificamos si la app ya fue autorizada permanentemente
       final isAuthorized = isAppAuthorized(appAction.appName);
       final needsAuth = !isAuthorized;
-      final text = needsAuth
-          ? "He preparado la acción para ${appAction.appName}. Como es la primera vez, ¿autorizas abrir la aplicación?"
-          : "Abriendo ${appAction.appName}...";
+      String text;
+      if (needsAuth) {
+        text = "He preparado la acción para ${appAction.appName}. Como es la primera vez, ¿autorizas abrir la aplicación?";
+      } else {
+        if (appAction.payload != null && appAction.payload!.isNotEmpty) {
+          if (appAction.type == ActionType.whatsapp) {
+            text = "Abriendo WhatsApp para comunicarte con ${appAction.payload}...";
+          } else if (appAction.type == ActionType.youtube) {
+            text = "Buscando «${appAction.payload}» en YouTube...";
+          } else if (appAction.type == ActionType.spotify) {
+            text = "Poniendo «${appAction.payload}» en Spotify...";
+          } else if (appAction.type == ActionType.dialer) {
+            text = "Preparando llamada para ${appAction.payload}...";
+          } else {
+            text = "Abriendo ${appAction.appName}...";
+          }
+        } else {
+          text = "Abriendo ${appAction.appName}...";
+        }
+      }
 
       return BrainResponse(
         text: text,
@@ -175,14 +191,26 @@ class AssistantBrain {
       );
     }
 
-    // Respuesta general
+    // Detección si menciona contactos en general
+    if (effectiveInput.contains('contacto') || effectiveInput.contains('mamá') || effectiveInput.contains('mama') || effectiveInput.contains('papá') || effectiveInput.contains('papa')) {
+      return BrainResponse(
+        text: "Entendido. ¿Deseas que le escribamos por WhatsApp o prefieres llamarle por teléfono?",
+      );
+    }
+
+    // Respuestas conversacionales naturales
+    final smartFallbacks = [
+      "Te escucho. ¿Quieres que lo busque en YouTube, en Google o prefieres abrir WhatsApp?",
+      "Comprendido. ¿Deseas que abramos alguna aplicación como WhatsApp o YouTube?",
+      "Aquí estoy listo. Dime qué aplicación abrimos o qué consulta deseas hacer.",
+    ];
     return BrainResponse(
-      text: "Entendido: «$rawInput». ¿Deseas que busque esto en la web o quieres que abramos alguna aplicación?",
+      text: smartFallbacks[_random.nextInt(smartFallbacks.length)],
     );
   }
 
   AppAction? _detectAppAction(String input) {
-    // 1. WhatsApp con todas sus variantes de pronunciación y jerga
+    // 1. WhatsApp con todas sus variantes y detección de contactos
     final isWhatsApp = input.contains('whatsapp') ||
         input.contains('guasap') ||
         input.contains('wasap') ||
@@ -192,24 +220,35 @@ class AssistantBrain {
         input.contains('whats') ||
         input.contains('wh') ||
         input.contains('mensaje a') ||
+        input.contains('escribe a') ||
+        input.contains('escríbele a') ||
+        input.contains('escribele a') ||
         input.contains('chat');
 
     if (isWhatsApp) {
-      String? textPayload;
-      if (input.contains('mensaje') || input.contains('diciendo')) {
-        final parts = input.split(RegExp(r'(diciendo|mensaje|que)'));
-        if (parts.length > 1) {
-          textPayload = parts.last.trim();
+      String? targetContact;
+      // Extraer contacto si se menciona: "contacto mamá", "a mamá", "con mamá", "para mamá"
+      final contactRegex = RegExp(r'(contacto|a|al|con|para)\s+([a-záéíóúñ]+)', caseSensitive: false);
+      final matches = contactRegex.allMatches(input);
+      for (final m in matches) {
+        final candidate = m.group(2)!.trim();
+        final lower = candidate.toLowerCase();
+        if (!['whatsapp', 'wasap', 'wsp', 'whap', 'wha', 'wh', 'el', 'la', 'un', 'una', 'mi', 'los', 'las'].contains(lower)) {
+          targetContact = candidate[0].toUpperCase() + candidate.substring(1);
+          break;
         }
       }
+
+      final description = targetContact != null
+          ? 'Abrir WhatsApp y buscar a $targetContact'
+          : 'Abrir la aplicación WhatsApp';
+
       return AppAction(
         type: ActionType.whatsapp,
         appName: 'WhatsApp',
         packageName: 'com.whatsapp',
-        payload: textPayload,
-        description: textPayload != null && textPayload.isNotEmpty
-            ? 'Abrir WhatsApp y redactar: "$textPayload"'
-            : 'Abrir la aplicación WhatsApp',
+        payload: targetContact,
+        description: description,
       );
     }
 
@@ -285,15 +324,26 @@ class AssistantBrain {
       );
     }
 
-    // 6. Teléfono / Llamadas
+    // 6. Teléfono / Llamadas (Detecta "llama a mamá", "llama a Juan", o números)
     if (input.startsWith('llama') || input.startsWith('marcar') || input.contains('teléfono') || input.contains('telefono')) {
       final digits = input.replaceAll(RegExp(r'[^0-9+]'), '');
+      String? contactName;
+      if (digits.isEmpty) {
+        final contactRegex = RegExp(r'(a|al|para)\s+([a-záéíóúñ]+)', caseSensitive: false);
+        final match = contactRegex.firstMatch(input);
+        if (match != null && match.group(2) != null) {
+          contactName = match.group(2)!.trim();
+        }
+      }
+
+      final label = contactName ?? (digits.isNotEmpty ? digits : null);
+
       return AppAction(
         type: ActionType.dialer,
         appName: 'Teléfono',
         packageName: 'com.android.dialer',
-        payload: digits.isNotEmpty ? digits : null,
-        description: digits.isNotEmpty ? 'Llamar al número $digits' : 'Abrir el teclado telefónico',
+        payload: label,
+        description: label != null ? 'Llamar a $label' : 'Abrir el teclado telefónico',
       );
     }
 
