@@ -21,17 +21,20 @@ class AssistantBrain {
   String assistantName = "Jarvis";
 
   /// Procesa la entrada del usuario reconociendo su nombre personalizado y comandos
-  BrainResponse processInput(String rawInput, bool isPreAuthorized) {
+  BrainResponse processInput(
+    String rawInput,
+    bool Function(String appName) isAppAuthorized,
+  ) {
     String input = rawInput.trim();
     final lowerName = assistantName.toLowerCase();
 
     // 1. Detección y limpieza de la palabra clave de activación (Wake Word)
-    // Ejemplos: "Oye Jarvis", "Hey Jarvis", "Jarvis abre whatsapp", etc.
     final wakePrefixes = [
       'oye $lowerName',
       'hey $lowerName',
       'hola $lowerName',
       'ok $lowerName',
+      'a ver $lowerName',
       lowerName,
     ];
 
@@ -42,7 +45,6 @@ class AssistantBrain {
       if (cleanCommand.startsWith(prefix)) {
         calledByName = true;
         cleanCommand = cleanCommand.substring(prefix.length).trim();
-        // Quitar comas o puntos iniciales si quedaron tras el nombre
         if (cleanCommand.startsWith(',') || cleanCommand.startsWith('.')) {
           cleanCommand = cleanCommand.substring(1).trim();
         }
@@ -63,7 +65,6 @@ class AssistantBrain {
       );
     }
 
-    // Si había un comando después de llamarlo, procesamos cleanCommand
     final effectiveInput = cleanCommand.isNotEmpty ? cleanCommand : input.toLowerCase();
 
     // 2. Comando por voz para cambiar su propio nombre
@@ -89,7 +90,9 @@ class AssistantBrain {
     // 3. Detección de Intent para abrir Aplicaciones
     final appAction = _detectAppAction(effectiveInput);
     if (appAction != null) {
-      final needsAuth = !isPreAuthorized;
+      // Verificamos si la app ya fue autorizada permanentemente
+      final isAuthorized = isAppAuthorized(appAction.appName);
+      final needsAuth = !isAuthorized;
       final text = needsAuth
           ? "He preparado la acción para ${appAction.appName}. Como es la primera vez, ¿autorizas abrir la aplicación?"
           : "Abriendo ${appAction.appName}...";
@@ -102,7 +105,7 @@ class AssistantBrain {
     }
 
     // 4. Preguntas de Información / Utilidad
-    if (effectiveInput.contains('hora') || effectiveInput.contains('qué horas')) {
+    if (effectiveInput.contains('hora') || effectiveInput.contains('qué horas') || effectiveInput.contains('que horas')) {
       final now = DateTime.now();
       final timeStr = DateFormat('h:mm a').format(now);
       return BrainResponse(
@@ -121,7 +124,7 @@ class AssistantBrain {
     // 5. Saludos e Identidad
     if (_matchesAny(effectiveInput, ['quién eres', 'quien eres', 'cómo te llamas', 'como te llamas'])) {
       return BrainResponse(
-        text: "Me llamo **$assistantName**, tu asistente móvil inteligente. Puedes llamarme diciendo «Oye $assistantName» desde cualquier parte del teléfono. 🚀",
+        text: "Me llamo **$assistantName**, tu asistente móvil inteligente. Puedes llamarme diciendo «Oye $assistantName». 🚀",
       );
     }
 
@@ -172,15 +175,26 @@ class AssistantBrain {
       );
     }
 
-    // Respuesta general inteligente
+    // Respuesta general
     return BrainResponse(
       text: "Entendido: «$rawInput». ¿Deseas que busque esto en la web o quieres que abramos alguna aplicación?",
     );
   }
 
   AppAction? _detectAppAction(String input) {
-    // WhatsApp
-    if (input.contains('whatsapp') || input.contains('guasap') || input.contains('mensaje a')) {
+    // 1. WhatsApp con todas sus variantes de pronunciación y jerga
+    final isWhatsApp = input.contains('whatsapp') ||
+        input.contains('guasap') ||
+        input.contains('wasap') ||
+        input.contains('wsp') ||
+        input.contains('whap') ||
+        input.contains('wha') ||
+        input.contains('whats') ||
+        input.contains('wh') ||
+        input.contains('mensaje a') ||
+        input.contains('chat');
+
+    if (isWhatsApp) {
       String? textPayload;
       if (input.contains('mensaje') || input.contains('diciendo')) {
         final parts = input.split(RegExp(r'(diciendo|mensaje|que)'));
@@ -199,17 +213,14 @@ class AssistantBrain {
       );
     }
 
-    // YouTube
-    if (input.contains('youtube') || input.contains('yutub') || input.contains('video de') || input.contains('pon en youtube')) {
+    // 2. YouTube
+    if (input.contains('youtube') || input.contains('yutub') || input.contains('yt') || input.contains('video') || input.contains('pon en youtube')) {
       String? query;
       final clean = input
-          .replaceAll('abre youtube', '')
-          .replaceAll('abrir youtube', '')
-          .replaceAll('en youtube', '')
-          .replaceAll('pon en', '')
-          .replaceAll('busca en', '')
-          .replaceAll('buscar en', '')
-          .replaceAll('pon', '')
+          .replaceAll(RegExp(r'(abre|abrir|pon en|busca en|buscar en|en|video de|pon)\s+'), '')
+          .replaceAll('youtube', '')
+          .replaceAll('yutub', '')
+          .replaceAll('yt', '')
           .trim();
       if (clean.isNotEmpty) {
         query = clean;
@@ -223,17 +234,12 @@ class AssistantBrain {
       );
     }
 
-    // Spotify
-    if (input.contains('spotify') || input.contains('música') || input.contains('musica') || input.contains('canción') || input.contains('cancion')) {
+    // 3. Spotify / Música
+    if (input.contains('spotify') || input.contains('música') || input.contains('musica') || input.contains('canción') || input.contains('cancion') || input.contains('reproduce')) {
       String? song;
       final clean = input
-          .replaceAll('abre spotify', '')
-          .replaceAll('abrir spotify', '')
-          .replaceAll('en spotify', '')
-          .replaceAll('pon música', '')
-          .replaceAll('pon musica', '')
-          .replaceAll('reproduce', '')
-          .replaceAll('pon', '')
+          .replaceAll(RegExp(r'(abre|abrir|pon en|reproduce|cancion|canción|musica|música|pon)\s+'), '')
+          .replaceAll('spotify', '')
           .trim();
       if (clean.isNotEmpty) {
         song = clean;
@@ -243,12 +249,12 @@ class AssistantBrain {
         appName: 'Spotify',
         packageName: 'com.spotify.music',
         payload: song,
-        description: song != null ? 'Abrir Spotify y buscar: "$song"' : 'Abrir Spotify',
+        description: song != null ? 'Abrir Spotify y reproducir: "$song"' : 'Abrir Spotify',
       );
     }
 
-    // Cámara
-    if (input.contains('cámara') || input.contains('camara') || input.contains('foto') || input.contains('fotografía')) {
+    // 4. Cámara
+    if (input.contains('cámara') || input.contains('camara') || input.contains('foto') || input.contains('fotos') || input.contains('selfie')) {
       return AppAction(
         type: ActionType.camera,
         appName: 'Cámara',
@@ -257,17 +263,15 @@ class AssistantBrain {
       );
     }
 
-    // Mapas
-    if (input.contains('mapa') || input.contains('maps') || input.contains('cómo llegar') || input.contains('como llegar') || input.contains('dónde queda') || input.contains('llevame')) {
+    // 5. Mapas / Navegación
+    if (input.contains('mapa') || input.contains('mapas') || input.contains('maps') || input.contains('cómo llegar') || input.contains('como llegar') || input.contains('dónde queda') || input.contains('llevame') || input.contains('llévame')) {
       String? destination;
       final clean = input
-          .replaceAll('abre mapas', '')
-          .replaceAll('abrir google maps', '')
-          .replaceAll('abrir maps', '')
-          .replaceAll('cómo llegar a', '')
-          .replaceAll('como llegar a', '')
-          .replaceAll('llévame a', '')
-          .replaceAll('llevame a', '')
+          .replaceAll(RegExp(r'(abre|abrir|cómo llegar a|como llegar a|llévame a|llevame a|dónde queda)\s+'), '')
+          .replaceAll('google maps', '')
+          .replaceAll('mapas', '')
+          .replaceAll('mapa', '')
+          .replaceAll('maps', '')
           .trim();
       if (clean.isNotEmpty) {
         destination = clean;
@@ -281,7 +285,7 @@ class AssistantBrain {
       );
     }
 
-    // Teléfono
+    // 6. Teléfono / Llamadas
     if (input.startsWith('llama') || input.startsWith('marcar') || input.contains('teléfono') || input.contains('telefono')) {
       final digits = input.replaceAll(RegExp(r'[^0-9+]'), '');
       return AppAction(
@@ -293,15 +297,10 @@ class AssistantBrain {
       );
     }
 
-    // Navegador Web
+    // 7. Navegador Web
     if (input.startsWith('busca ') || input.startsWith('buscar ') || input.contains('navegador') || input.contains('google')) {
       final query = input
-          .replaceAll('busca en google', '')
-          .replaceAll('buscar en google', '')
-          .replaceAll('busca en internet', '')
-          .replaceAll('buscar en internet', '')
-          .replaceAll('busca', '')
-          .replaceAll('buscar', '')
+          .replaceAll(RegExp(r'(busca en google|buscar en google|busca en internet|buscar en internet|busca|buscar)\s+'), '')
           .trim();
       return AppAction(
         type: ActionType.browser,

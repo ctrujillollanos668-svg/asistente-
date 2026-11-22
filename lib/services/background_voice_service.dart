@@ -34,8 +34,8 @@ class BackgroundVoiceService {
         channelId: 'asistente_voice_channel',
         channelName: 'Servicio de Asistente de Voz',
         channelDescription: 'Mantiene al asistente activo para responder cuando lo llames por su nombre.',
-        channelImportance: NotificationChannelImportance.LOW,
-        priority: NotificationPriority.LOW,
+        channelImportance: NotificationChannelImportance.DEFAULT,
+        priority: NotificationPriority.HIGH,
       ),
       iosNotificationOptions: const IOSNotificationOptions(
         showNotification: false,
@@ -64,8 +64,11 @@ class BackgroundVoiceService {
 
     await FlutterForegroundTask.startService(
       serviceId: 256,
-      notificationTitle: '$assistantName está escuchando',
-      notificationText: "Di «Oye $assistantName» para activar tu asistente.",
+      notificationTitle: '$assistantName está activo',
+      notificationText: "Toca para hablar o di «Oye $assistantName».",
+      notificationButtons: [
+        const NotificationButton(id: 'speak_btn', text: '🎤 Hablar ahora'),
+      ],
       callback: startCallback,
     );
   }
@@ -74,8 +77,11 @@ class BackgroundVoiceService {
   static Future<void> updateNotification(String assistantName) async {
     if (await FlutterForegroundTask.isRunningService) {
       await FlutterForegroundTask.updateService(
-        notificationTitle: '$assistantName está escuchando',
-        notificationText: "Di «Oye $assistantName» para activar tu asistente.",
+        notificationTitle: '$assistantName está activo',
+        notificationText: "Toca para hablar o di «Oye $assistantName».",
+        notificationButtons: [
+          const NotificationButton(id: 'speak_btn', text: '🎤 Hablar ahora'),
+        ],
       );
     }
   }

@@ -33,6 +33,7 @@ class SettingsDialog extends StatefulWidget {
 class _SettingsDialogState extends State<SettingsDialog> {
   late TextEditingController _nameController;
   bool _backgroundListening = true;
+  bool _autoListening = true;
   List<String> _authorizedApps = [];
 
   final List<String> _popularNames = [
@@ -53,9 +54,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
   Future<void> _loadSettings() async {
     final bg = await PreferencesService.isBackgroundListeningEnabled();
+    final auto = await PreferencesService.isAutoListeningEnabled();
     final apps = await PreferencesService.getAuthorizedApps();
     setState(() {
       _backgroundListening = bg;
+      _autoListening = auto;
       _authorizedApps = apps;
     });
   }
@@ -71,6 +74,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     if (newName.isNotEmpty) {
       await PreferencesService.setAssistantName(newName);
       await PreferencesService.setBackgroundListeningEnabled(_backgroundListening);
+      await PreferencesService.setAutoListeningEnabled(_autoListening);
 
       if (_backgroundListening) {
         await BackgroundVoiceService.startService(newName);
@@ -198,12 +202,44 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Escucha en Segundo Plano",
+                          "Modo Manos Libres (Escucha Continua)",
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Permite que responda cuando lo llames aunque estés en otra app.",
+                          "Escucha automáticamente al abrir la app y tras cada respuesta sin tener que presionar el micrófono.",
+                          style: TextStyle(color: Colors.grey.shade400, fontSize: 11.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _autoListening,
+                    activeColor: const Color(0xFF10B981),
+                    onChanged: (val) {
+                      setState(() {
+                        _autoListening = val;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Switch de Notificación y segundo plano
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Acceso en Segundo Plano",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Mantiene el acceso rápido con botón de hablar desde la barra de notificaciones.",
                           style: TextStyle(color: Colors.grey.shade400, fontSize: 11.5),
                         ),
                       ],

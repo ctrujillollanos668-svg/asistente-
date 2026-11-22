@@ -4,6 +4,7 @@ class PreferencesService {
   static const String _keyAssistantName = 'assistant_name';
   static const String _keyAuthorizedApps = 'authorized_apps';
   static const String _keyBackgroundListening = 'background_listening_enabled';
+  static const String _keyAutoListening = 'auto_listening_enabled';
   static const String _keyMicPermissionGranted = 'mic_permission_granted';
 
   static SharedPreferences? _prefs;
@@ -67,6 +68,18 @@ class PreferencesService {
   static Future<void> setBackgroundListeningEnabled(bool enabled) async {
     final prefs = await _instance;
     await prefs.setBool(_keyBackgroundListening, enabled);
+  }
+
+  /// Verifica si el modo manos libres (escucha automática) está activo
+  static Future<bool> isAutoListeningEnabled() async {
+    final prefs = await _instance;
+    return prefs.getBool(_keyAutoListening) ?? true;
+  }
+
+  /// Activa o desactiva el modo manos libres
+  static Future<void> setAutoListeningEnabled(bool enabled) async {
+    final prefs = await _instance;
+    await prefs.setBool(_keyAutoListening, enabled);
   }
 
   /// Verifica si el permiso de micrófono ya fue concedido una vez

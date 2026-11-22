@@ -72,6 +72,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if (bgEnabled) {
       await BackgroundVoiceService.startService(name);
     }
+
+    // Modo Manos Libres: si el permiso de micrófono ya está otorgado, empieza a escuchar solo
+    final hasPerm = await PermissionService.hasMicrophonePermission();
+    final autoListen = await PreferencesService.isAutoListeningEnabled();
+    if (hasPerm && autoListen && mounted) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted && _orbState == OrbState.idle) {
+        _startListening();
+      }
+    }
   }
 
   void _addInitialAssistantMessage(String name) {
@@ -236,9 +246,11 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     _scrollToBottom();
 
-    // 2. Procesar con el cerebro del asistente
-    final isPreAuth = _brainDetectPreAuth(cleanInput);
-    final brainResponse = _brain.processInput(cleanInput, isPreAuth);
+    // 2. Procesar con el cerebro del asistente verificando permisos permanentes
+    final brainResponse = _brain.processInput(
+      cleanInput,
+      (appName) => _appLauncher.isAppPreAuthorized(appName),
+    );
 
     // Si el usuario ordenó cambiar el nombre por voz
     if (brainResponse.newAssistantName != null) {
@@ -274,11 +286,20 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!_isMuted) {
       await _speechService.speak(
         brainResponse.text,
-        onDone: () {
+        onDone: () async {
           if (!mounted) return;
           setState(() {
             _orbState = OrbState.idle;
           });
+
+          // Modo Manos Libres: Vuelve a escuchar automáticamente tras responder
+          final autoListen = await PreferencesService.isAutoListeningEnabled();
+          if (autoListen && mounted && !_isMuted) {
+            await Future.delayed(const Duration(milliseconds: 400));
+            if (mounted && _orbState == OrbState.idle) {
+              _startListening();
+            }
+          }
         },
       );
     }
@@ -290,14 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  bool _brainDetectPreAuth(String input) {
-    if (input.contains('whatsapp')) return _appLauncher.isAppPreAuthorized('WhatsApp');
-    if (input.contains('youtube')) return _appLauncher.isAppPreAuthorized('YouTube');
-    if (input.contains('spotify')) return _appLauncher.isAppPreAuthorized('Spotify');
-    if (input.contains('cámara') || input.contains('camara')) return _appLauncher.isAppPreAuthorized('Cámara');
-    if (input.contains('map')) return _appLauncher.isAppPreAuthorized('Google Maps');
-    return false;
-  }
+
 
   Future<void> _handleAuthorizeAction(ChatMessage message, bool remember) async {
     if (message.action == null) return;
