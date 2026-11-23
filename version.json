@@ -1,6 +1,6 @@
 {
-  "version": "1.0.2",
-  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.2/app-release.apk",
-  "changelog": "• Flujo conversacional inteligente por turnos (ej: 'entra a WhatsApp' -> '¿a quién escribimos o llamamos?').\n• Acciones directas dentro de apps (mensajes a contactos en WhatsApp, búsqueda de música en YouTube/Spotify).\n• Recuperación automática del micrófono (se eliminó el problema de quedarse sordo o bloqueado).\n• Mayor estabilidad y respuesta fluida.",
+  "version": "1.0.3",
+  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.3/app-release.apk",
+  "changelog": "• Envío automático en WhatsApp con Servicio de Accesibilidad (presiona 'Enviar' por ti).\n• Corrección del instalador FileProvider en teléfonos Xiaomi/Android.\n• Flujo conversacional interactivo por turnos y recuperación continua de micrófono.",
   "mandatory": false
 }

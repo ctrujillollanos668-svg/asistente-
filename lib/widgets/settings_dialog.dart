@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/accessibility_service.dart';
 import '../services/background_voice_service.dart';
 import '../services/preferences_service.dart';
 
@@ -34,6 +35,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late TextEditingController _nameController;
   bool _backgroundListening = true;
   bool _autoListening = true;
+  bool _accessibilityEnabled = false;
   List<String> _authorizedApps = [];
 
   final List<String> _popularNames = [
@@ -56,10 +58,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
     final bg = await PreferencesService.isBackgroundListeningEnabled();
     final auto = await PreferencesService.isAutoListeningEnabled();
     final apps = await PreferencesService.getAuthorizedApps();
+    final access = await AccessibilityService.isAccessibilityEnabled();
     setState(() {
       _backgroundListening = bg;
       _autoListening = auto;
       _authorizedApps = apps;
+      _accessibilityEnabled = access;
     });
   }
 
@@ -253,6 +257,47 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         _backgroundListening = val;
                       });
                     },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Envío Automático en WhatsApp (Accesibilidad)
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Envío automático en WhatsApp",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _accessibilityEnabled
+                              ? "✓ Accesibilidad activa. El asistente presiona «Enviar» automáticamente por ti."
+                              : "Toca para activar el Servicio de Accesibilidad y permitir que el asistente presione «Enviar» solo.",
+                          style: TextStyle(
+                            color: _accessibilityEnabled ? const Color(0xFF10B981) : Colors.amber.shade400,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await AccessibilityService.openAccessibilitySettings();
+                      if (mounted) Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _accessibilityEnabled ? const Color(0xFF334155) : const Color(0xFF25D366),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    child: Text(_accessibilityEnabled ? "Ajustes" : "Activar", style: const TextStyle(fontSize: 12)),
                   ),
                 ],
               ),
