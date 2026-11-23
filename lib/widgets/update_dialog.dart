@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/update_service.dart';
 
 class UpdateDialog extends StatefulWidget {
@@ -174,10 +175,28 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12),
-                    textAlign: TextAlign.center,
+                  child: Column(
+                    children: [
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          launchUrl(
+                            Uri.parse(widget.updateInfo.apkUrl),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
+                        icon: const Icon(Icons.open_in_browser, size: 16, color: Color(0xFF00F2FE)),
+                        label: const Text(
+                          "Descargar desde el navegador",
+                          style: TextStyle(color: Color(0xFF00F2FE), fontSize: 12),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
