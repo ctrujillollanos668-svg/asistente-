@@ -1,7 +1,6 @@
 import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/chat_message.dart';
-import 'accessibility_service.dart';
 import 'preferences_service.dart';
 
 class AppLauncherService {
@@ -68,10 +67,6 @@ class AppLauncherService {
   }
 
   Future<bool> _launchWhatsApp(String? query) async {
-    // Si hay un mensaje o contacto, programamos el clic automático por Accesibilidad
-    if (query != null && query.isNotEmpty) {
-      await AccessibilityService.scheduleAutoSendWhatsApp();
-    }
     String url = "whatsapp://send";
     if (query != null && query.isNotEmpty) {
       url = "whatsapp://send?text=${Uri.encodeComponent(query)}";

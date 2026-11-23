@@ -1,6 +1,6 @@
 {
-  "version": "1.0.3",
-  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.3/app-release.apk",
-  "changelog": "• Envío automático en WhatsApp con Servicio de Accesibilidad (presiona 'Enviar' por ti).\n• Corrección del instalador FileProvider en teléfonos Xiaomi/Android.\n• Flujo conversacional interactivo por turnos y recuperación continua de micrófono.",
+  "version": "1.0.4",
+  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.4/app-release.apk",
+  "changelog": "• Instalación 100% limpia sin advertencias de Play Protect.\n• Apertura inteligente de WhatsApp con mensaje listo para enviar con 1 toque.\n• Solución definitiva para el instalador en teléfonos Xiaomi y Android.\n• Recuperación continua de micrófono y conversación por turnos.",
   "mandatory": false
 }
