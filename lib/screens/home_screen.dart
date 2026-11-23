@@ -65,7 +65,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _addInitialAssistantMessage(name);
 
-    await _speechService.initializeSpeech();
+    await _speechService.initializeSpeech(
+      onStatus: (status) {
+        if (!mounted) return;
+        if (status == 'notListening' || status == 'done') {
+          if (_orbState == OrbState.listening) {
+            _onSpeechSessionEnded();
+          }
+        }
+      },
+      onError: (errorMsg) {
+        if (!mounted) return;
+        if (_orbState == OrbState.listening) {
+          _onSpeechSessionEnded();
+        }
+      },
+    );
     await _speechService.initializeTts();
 
     final bgEnabled = await PreferencesService.isBackgroundListeningEnabled();
@@ -78,6 +93,31 @@ class _HomeScreenState extends State<HomeScreen> {
     final autoListen = await PreferencesService.isAutoListeningEnabled();
     if (hasPerm && autoListen && mounted) {
       await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted && _orbState == OrbState.idle) {
+        _startListening();
+      }
+    }
+  }
+
+  void _onSpeechSessionEnded() {
+    if (!mounted) return;
+    if (_liveSpokenText.isNotEmpty && _liveSpokenText != "Escuchando...") {
+      final textToProcess = _liveSpokenText;
+      _liveSpokenText = "";
+      _handleUserInput(textToProcess);
+    } else {
+      setState(() {
+        _orbState = OrbState.idle;
+        _liveSpokenText = "";
+      });
+      _autoListenIfHandsFree();
+    }
+  }
+
+  Future<void> _autoListenIfHandsFree() async {
+    final autoListen = await PreferencesService.isAutoListeningEnabled();
+    if (autoListen && mounted && !_isMuted && _orbState == OrbState.idle) {
+      await Future.delayed(const Duration(milliseconds: 300));
       if (mounted && _orbState == OrbState.idle) {
         _startListening();
       }
@@ -293,13 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
           });
 
           // Modo Manos Libres: Vuelve a escuchar automáticamente tras responder
-          final autoListen = await PreferencesService.isAutoListeningEnabled();
-          if (autoListen && mounted && !_isMuted) {
-            await Future.delayed(const Duration(milliseconds: 400));
-            if (mounted && _orbState == OrbState.idle) {
-              _startListening();
-            }
-          }
+          _autoListenIfHandsFree();
         },
       );
     }

@@ -9,6 +9,9 @@ class SpeechService {
   bool _isTtsInitialized = false;
   bool isMuted = false;
 
+  Function(String status)? onStatusCallback;
+  Function(String error)? onErrorCallback;
+
   bool get isListening => _speechToText.isListening;
 
   /// Inicializa el motor de Reconocimiento de Voz (STT)
@@ -16,13 +19,20 @@ class SpeechService {
     Function(String status)? onStatus,
     Function(String error)? onError,
   }) async {
+    if (onStatus != null) onStatusCallback = onStatus;
+    if (onError != null) onErrorCallback = onError;
+
     if (_isSpeechInitialized) return true;
     try {
       _isSpeechInitialized = await _speechToText.initialize(
-        onStatus: onStatus,
+        onStatus: (status) {
+          if (onStatusCallback != null) {
+            onStatusCallback!(status);
+          }
+        },
         onError: (errorNotification) {
-          if (onError != null) {
-            onError(errorNotification.errorMsg);
+          if (onErrorCallback != null) {
+            onErrorCallback!(errorNotification.errorMsg);
           }
         },
       );
@@ -67,7 +77,7 @@ class SpeechService {
       listenOptions: stt.SpeechListenOptions(
         localeId: 'es_ES',
         listenMode: stt.ListenMode.confirmation,
-        cancelOnError: true,
+        cancelOnError: false,
         partialResults: true,
       ),
     );

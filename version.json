@@ -1,6 +1,6 @@
 {
-  "version": "1.0.1",
-  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.1/app-release.apk",
-  "changelog": "• Apertura inteligente de WhatsApp (reconoce jerga 'whap', 'wasap', 'chat' y contactos como 'mamá').\n• Reconocimiento de voz continuo y activación por nombre estilo Siri.\n• Permisos permanentes de una sola vez para abrir aplicaciones.\n• Mejoras generales de estabilidad.",
+  "version": "1.0.2",
+  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.2/app-release.apk",
+  "changelog": "• Flujo conversacional inteligente por turnos (ej: 'entra a WhatsApp' -> '¿a quién escribimos o llamamos?').\n• Acciones directas dentro de apps (mensajes a contactos en WhatsApp, búsqueda de música en YouTube/Spotify).\n• Recuperación automática del micrófono (se eliminó el problema de quedarse sordo o bloqueado).\n• Mayor estabilidad y respuesta fluida.",
   "mandatory": false
 }

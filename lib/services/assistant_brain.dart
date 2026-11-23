@@ -20,7 +20,11 @@ class AssistantBrain {
   final Random _random = Random();
   String assistantName = "Jarvis";
 
-  /// Procesa la entrada del usuario reconociendo su nombre personalizado y comandos
+  /// Memoria conversacional activa (Multi-turno / Estado de la conversación)
+  String? activeContext; // 'whatsapp', 'youtube', 'spotify', 'dialer'
+  String? contextContact; // Contacto recordado en el flujo
+
+  /// Procesa la entrada del usuario reconociendo su nombre personalizado, contexto y comandos
   BrainResponse processInput(
     String rawInput,
     bool Function(String appName) isAppAuthorized,
@@ -67,7 +71,24 @@ class AssistantBrain {
 
     final effectiveInput = cleanCommand.isNotEmpty ? cleanCommand : input.toLowerCase();
 
-    // 2. Comando por voz para cambiar su propio nombre
+    // 2. Comando para cancelar el contexto actual
+    if (_matchesAny(effectiveInput, ['cancela', 'cancelar', 'olvídalo', 'olvidalo', 'nada', 'ninguna'])) {
+      activeContext = null;
+      contextContact = null;
+      return BrainResponse(
+        text: "De acuerdo, cancelado. ¿Qué otra cosa hacemos?",
+      );
+    }
+
+    // 3. Procesamiento en caso de CONTEXTO ACTIVO (Segunda parte de la conversación)
+    if (activeContext != null) {
+      final responseFromContext = _handleActiveContext(effectiveInput, isAppAuthorized);
+      if (responseFromContext != null) {
+        return responseFromContext;
+      }
+    }
+
+    // 4. Comando por voz para cambiar su propio nombre
     if (effectiveInput.contains('cámbiate el nombre a') ||
         effectiveInput.contains('cambiate el nombre a') ||
         effectiveInput.contains('tu nombre ahora es') ||
@@ -87,9 +108,33 @@ class AssistantBrain {
       }
     }
 
-    // 3. Detección de Intent para abrir Aplicaciones
+    // 5. Detección de Intent para abrir Aplicaciones o iniciar flujo contextual
     final appAction = _detectAppAction(effectiveInput);
     if (appAction != null) {
+      // Si la app es WhatsApp y el usuario NO especificó contacto ni mensaje
+      if (appAction.type == ActionType.whatsapp && (appAction.payload == null || appAction.payload!.isEmpty)) {
+        activeContext = 'whatsapp';
+        return BrainResponse(
+          text: "He preparado WhatsApp. ¿Quieres entrar al chat de algún contacto para escribirle o prefieres que hagamos una llamada?",
+        );
+      }
+
+      // Si la app es YouTube y el usuario NO especificó video/música
+      if (appAction.type == ActionType.youtube && (appAction.payload == null || appAction.payload!.isEmpty)) {
+        activeContext = 'youtube';
+        return BrainResponse(
+          text: "YouTube listo. ¿Qué música, artista o video quieres reproducir?",
+        );
+      }
+
+      // Si la app es Spotify y no especificó música
+      if (appAction.type == ActionType.spotify && (appAction.payload == null || appAction.payload!.isEmpty)) {
+        activeContext = 'spotify';
+        return BrainResponse(
+          text: "Spotify preparado. ¿Qué canción o lista deseas escuchar?",
+        );
+      }
+
       final isAuthorized = isAppAuthorized(appAction.appName);
       final needsAuth = !isAuthorized;
       String text;
@@ -98,7 +143,7 @@ class AssistantBrain {
       } else {
         if (appAction.payload != null && appAction.payload!.isNotEmpty) {
           if (appAction.type == ActionType.whatsapp) {
-            text = "Abriendo WhatsApp para comunicarte con ${appAction.payload}...";
+            text = "Abriendo WhatsApp: ${appAction.description}...";
           } else if (appAction.type == ActionType.youtube) {
             text = "Buscando «${appAction.payload}» en YouTube...";
           } else if (appAction.type == ActionType.spotify) {
@@ -120,7 +165,7 @@ class AssistantBrain {
       );
     }
 
-    // 4. Preguntas de Información / Utilidad
+    // 6. Preguntas de Información / Utilidad
     if (effectiveInput.contains('hora') || effectiveInput.contains('qué horas') || effectiveInput.contains('que horas')) {
       final now = DateTime.now();
       final timeStr = DateFormat('h:mm a').format(now);
@@ -137,7 +182,7 @@ class AssistantBrain {
       );
     }
 
-    // 5. Saludos e Identidad
+    // 7. Saludos e Identidad
     if (_matchesAny(effectiveInput, ['quién eres', 'quien eres', 'cómo te llamas', 'como te llamas'])) {
       return BrainResponse(
         text: "Me llamo **$assistantName**, tu asistente móvil inteligente. Puedes llamarme diciendo «Oye $assistantName». 🚀",
@@ -159,7 +204,7 @@ class AssistantBrain {
       );
     }
 
-    // 6. Entretenimiento: Chistes y Motivación
+    // 8. Entretenimiento: Chistes y Motivación
     if (_matchesAny(effectiveInput, ['chiste', 'cuéntame un chiste', 'hazme reír', 'un chiste'])) {
       final jokes = [
         "¿Qué le dice un semáforo a otro? ¡No me mires que me estoy cambiando! 😂",
@@ -193,6 +238,7 @@ class AssistantBrain {
 
     // Detección si menciona contactos en general
     if (effectiveInput.contains('contacto') || effectiveInput.contains('mamá') || effectiveInput.contains('mama') || effectiveInput.contains('papá') || effectiveInput.contains('papa')) {
+      activeContext = 'whatsapp';
       return BrainResponse(
         text: "Entendido. ¿Deseas que le escribamos por WhatsApp o prefieres llamarle por teléfono?",
       );
@@ -200,17 +246,118 @@ class AssistantBrain {
 
     // Respuestas conversacionales naturales
     final smartFallbacks = [
-      "Te escucho. ¿Quieres que lo busque en YouTube, en Google o prefieres abrir WhatsApp?",
-      "Comprendido. ¿Deseas que abramos alguna aplicación como WhatsApp o YouTube?",
-      "Aquí estoy listo. Dime qué aplicación abrimos o qué consulta deseas hacer.",
+      "Te escucho. ¿Quieres que busque algo en YouTube, en Google o prefieres redactar un WhatsApp?",
+      "Comprendido. ¿Deseas que entremos a WhatsApp, YouTube o hagamos una llamada?",
+      "Aquí estoy listo. Dime qué aplicación abrimos o qué acción deseas que hagamos.",
     ];
     return BrainResponse(
       text: smartFallbacks[_random.nextInt(smartFallbacks.length)],
     );
   }
 
+  /// Maneja respuestas cuando el usuario ya estaba en un flujo (ej: ya pidió WhatsApp y ahora da el mensaje o contacto)
+  BrainResponse? _handleActiveContext(String input, bool Function(String appName) isAppAuthorized) {
+    if (activeContext == 'whatsapp') {
+      // Si el usuario pide simplemente abrir la app
+      if (input.contains('solo abre') || input.contains('abre la app') || input.contains('entra a la app') || input == 'abrir') {
+        activeContext = null;
+        contextContact = null;
+        return BrainResponse(
+          text: "Abriendo la aplicación WhatsApp...",
+          action: AppAction(
+            type: ActionType.whatsapp,
+            appName: 'WhatsApp',
+            packageName: 'com.whatsapp',
+            description: 'Abrir WhatsApp',
+          ),
+          requiresAuthorization: !isAppAuthorized('WhatsApp'),
+        );
+      }
+
+      // Si pide hacer una llamada
+      if (input.contains('llama') || input.contains('llamar') || input.contains('llamada')) {
+        final contact = _extractContact(input) ?? contextContact ?? 'tu contacto';
+        activeContext = null;
+        contextContact = null;
+        return BrainResponse(
+          text: "Preparando llamada para $contact...",
+          action: AppAction(
+            type: ActionType.dialer,
+            appName: 'Teléfono',
+            packageName: 'com.android.dialer',
+            payload: contact,
+            description: 'Llamar a $contact',
+          ),
+          requiresAuthorization: !isAppAuthorized('Teléfono'),
+        );
+      }
+
+      // Si pide escribir o entrar a un chat
+      final contact = _extractContact(input) ?? contextContact;
+      final message = _extractMessageText(input);
+
+      activeContext = null;
+      contextContact = null;
+
+      final targetDescription = contact != null ? "a $contact" : "en el chat";
+      final msgPart = message != null ? " con el mensaje: «$message»" : "";
+
+      return BrainResponse(
+        text: "Entrando a WhatsApp para escribir $targetDescription$msgPart...",
+        action: AppAction(
+          type: ActionType.whatsapp,
+          appName: 'WhatsApp',
+          packageName: 'com.whatsapp',
+          payload: message ?? contact,
+          description: 'Enviar WhatsApp $targetDescription',
+        ),
+        requiresAuthorization: !isAppAuthorized('WhatsApp'),
+      );
+    }
+
+    if (activeContext == 'youtube') {
+      final query = input
+          .replaceAll(RegExp(r'(pon|busca|buscar|reproduce|de|un|video de)\s+'), '')
+          .trim();
+      activeContext = null;
+      final cleanQuery = query.isNotEmpty ? query : "música variada";
+      return BrainResponse(
+        text: "Buscando y reproduciendo «$cleanQuery» en YouTube...",
+        action: AppAction(
+          type: ActionType.youtube,
+          appName: 'YouTube',
+          packageName: 'com.google.android.youtube',
+          payload: cleanQuery,
+          description: 'Reproducir en YouTube: "$cleanQuery"',
+        ),
+        requiresAuthorization: !isAppAuthorized('YouTube'),
+      );
+    }
+
+    if (activeContext == 'spotify') {
+      final song = input
+          .replaceAll(RegExp(r'(pon|reproduce|cancion de|canción de|música de|musica de)\s+'), '')
+          .trim();
+      activeContext = null;
+      final cleanSong = song.isNotEmpty ? song : "éxitos";
+      return BrainResponse(
+        text: "Poniendo «$cleanSong» en Spotify...",
+        action: AppAction(
+          type: ActionType.spotify,
+          appName: 'Spotify',
+          packageName: 'com.spotify.music',
+          payload: cleanSong,
+          description: 'Poner en Spotify: "$cleanSong"',
+        ),
+        requiresAuthorization: !isAppAuthorized('Spotify'),
+      );
+    }
+
+    return null;
+  }
+
   AppAction? _detectAppAction(String input) {
-    // 1. WhatsApp con todas sus variantes y detección de contactos
+    // 1. WhatsApp con todas sus variantes, contactos y mensajes
     final isWhatsApp = input.contains('whatsapp') ||
         input.contains('guasap') ||
         input.contains('wasap') ||
@@ -223,31 +370,34 @@ class AssistantBrain {
         input.contains('escribe a') ||
         input.contains('escríbele a') ||
         input.contains('escribele a') ||
-        input.contains('chat');
+        input.contains('chat de') ||
+        input.contains('chat con');
 
     if (isWhatsApp) {
-      String? targetContact;
-      // Extraer contacto si se menciona: "contacto mamá", "a mamá", "con mamá", "para mamá"
-      final contactRegex = RegExp(r'(contacto|a|al|con|para)\s+([a-záéíóúñ]+)', caseSensitive: false);
-      final matches = contactRegex.allMatches(input);
-      for (final m in matches) {
-        final candidate = m.group(2)!.trim();
-        final lower = candidate.toLowerCase();
-        if (!['whatsapp', 'wasap', 'wsp', 'whap', 'wha', 'wh', 'el', 'la', 'un', 'una', 'mi', 'los', 'las'].contains(lower)) {
-          targetContact = candidate[0].toUpperCase() + candidate.substring(1);
-          break;
-        }
-      }
+      final contact = _extractContact(input);
+      final message = _extractMessageText(input);
 
-      final description = targetContact != null
-          ? 'Abrir WhatsApp y buscar a $targetContact'
-          : 'Abrir la aplicación WhatsApp';
+      String? payload;
+      String description;
+      if (message != null && contact != null) {
+        payload = message;
+        description = 'Enviar a $contact por WhatsApp: "$message"';
+      } else if (message != null) {
+        payload = message;
+        description = 'Enviar por WhatsApp: "$message"';
+      } else if (contact != null) {
+        payload = contact;
+        description = 'Abrir WhatsApp y buscar a $contact';
+      } else {
+        payload = null;
+        description = 'Abrir WhatsApp';
+      }
 
       return AppAction(
         type: ActionType.whatsapp,
         appName: 'WhatsApp',
         packageName: 'com.whatsapp',
-        payload: targetContact,
+        payload: payload,
         description: description,
       );
     }
@@ -256,7 +406,7 @@ class AssistantBrain {
     if (input.contains('youtube') || input.contains('yutub') || input.contains('yt') || input.contains('video') || input.contains('pon en youtube')) {
       String? query;
       final clean = input
-          .replaceAll(RegExp(r'(abre|abrir|pon en|busca en|buscar en|en|video de|pon)\s+'), '')
+          .replaceAll(RegExp(r'(abre|abrir|pon en|busca en|buscar en|en|video de|pon|reproduce)\s+'), '')
           .replaceAll('youtube', '')
           .replaceAll('yutub', '')
           .replaceAll('yt', '')
@@ -329,11 +479,7 @@ class AssistantBrain {
       final digits = input.replaceAll(RegExp(r'[^0-9+]'), '');
       String? contactName;
       if (digits.isEmpty) {
-        final contactRegex = RegExp(r'(a|al|para)\s+([a-záéíóúñ]+)', caseSensitive: false);
-        final match = contactRegex.firstMatch(input);
-        if (match != null && match.group(2) != null) {
-          contactName = match.group(2)!.trim();
-        }
+        contactName = _extractContact(input);
       }
 
       final label = contactName ?? (digits.isNotEmpty ? digits : null);
@@ -364,9 +510,33 @@ class AssistantBrain {
     return null;
   }
 
-  bool _matchesAny(String input, List<String> triggers) {
-    for (final trigger in triggers) {
-      if (input.contains(trigger)) return true;
+  String? _extractContact(String input) {
+    final contactRegex = RegExp(r'\b(contacto|chat de|chat con|a|al|con|para)\s+([a-záéíóúñ]+)', caseSensitive: false);
+    final matches = contactRegex.allMatches(input);
+    for (final m in matches) {
+      final candidate = m.group(2)!.trim();
+      final lower = candidate.toLowerCase();
+      if (!['a', 'al', 'con', 'para', 'whatsapp', 'wasap', 'wsp', 'whap', 'wha', 'wh', 'el', 'la', 'un', 'una', 'mi', 'los', 'las', 'que', 'chat', 'de'].contains(lower)) {
+        return candidate[0].toUpperCase() + candidate.substring(1);
+      }
+    }
+    return null;
+  }
+
+  String? _extractMessageText(String input) {
+    if (input.contains('diciendo') || input.contains('dile que') || input.contains('dile') || input.contains('escribe que') || input.contains('escribe') || input.contains('que ')) {
+      final parts = input.split(RegExp(r'(diciendo|dile que|dile|escribe que|escribe|escríbele que|escribele que|mensaje)\s+', caseSensitive: false));
+      if (parts.length > 1) {
+        final text = parts.last.trim();
+        if (text.isNotEmpty) return text;
+      }
+    }
+    return null;
+  }
+
+  bool _matchesAny(String input, List<String> patterns) {
+    for (final pattern in patterns) {
+      if (input.contains(pattern)) return true;
     }
     return false;
   }
