@@ -14,10 +14,10 @@ class PreferencesService {
     return _prefs!;
   }
 
-  /// Obtiene el nombre del asistente (por defecto "Jarvis")
+  /// Obtiene el nombre del asistente (por defecto "Nova")
   static Future<String> getAssistantName() async {
     final prefs = await _instance;
-    return prefs.getString(_keyAssistantName) ?? "Jarvis";
+    return prefs.getString(_keyAssistantName) ?? "Nova";
   }
 
   /// Guarda el nuevo nombre personalizado del asistente

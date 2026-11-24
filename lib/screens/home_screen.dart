@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _soundLevel = 0.0;
   String _liveSpokenText = "";
   bool _isMuted = false;
-  String _assistantName = "Jarvis";
+  String _assistantName = "Nova";
 
   List<String> get _quickSuggestions => [
         "Oye $_assistantName",
@@ -130,9 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _addInitialAssistantMessage(String name) {
     final welcome = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: "¡Qué más! Soy **$name**, tu asistente móvil avanzado. 🚀✨\n\n"
-          "Puedo abrir **cualquier app** de tu teléfono: WhatsApp, Instagram, TikTok, YouTube, Spotify, Netflix, Facebook, Telegram, Cámara, Mapas, y muchas más.\n\n"
-          "Solo dime «Oye $name» o toca el orbe. Las autorizaciones solo se piden una vez. ¡Pregúntame «¿Qué puedes hacer?» para ver todo! 🔥",
+      text: "Soy **$name**. ¿Qué hacemos?",
       isUser: false,
       timestamp: DateTime.now(),
     );
@@ -207,6 +205,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _handleOrbTap() async {
+    // REGLA N.º 1: Si está hablando, se detiene de inmediato y escucha al usuario
+    if (_orbState == OrbState.speaking) {
+      await _speechService.stopSpeaking();
+      setState(() {
+        _orbState = OrbState.idle;
+      });
+      _startListening();
+      return;
+    }
+
     if (_orbState == OrbState.listening) {
       await _stopListeningAndProcess();
       return;

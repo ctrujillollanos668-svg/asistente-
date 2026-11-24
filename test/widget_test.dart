@@ -71,8 +71,25 @@ void main() {
 
     test('Comando de ayuda / qué puedes hacer', () {
       final resp = brain.processInput('qué puedes hacer', (_) => true);
-      expect(resp.text, contains('Redes Sociales'));
+      expect(resp.text, contains('cualquier app'));
       expect(resp.text, contains('WhatsApp'));
+    });
+
+    test('Regla de interrupcion inmediata: para, stop, ya', () {
+      final resp = brain.processInput('para', (_) => true);
+      expect(resp.text, equals('Listo.'));
+      final resp2 = brain.processInput('stop', (_) => true);
+      expect(resp2.text, equals('Listo.'));
+    });
+
+    test('Preguntas no entendidas responden solo: ¿Cómo?', () {
+      final resp = brain.processInput('asdfghjkl zxcvbnm', (_) => true);
+      expect(resp.text, equals('¿Cómo?'));
+    });
+
+    test('Matemáticas directas concisas', () {
+      final resp = brain.processInput('cuánto es 5 por 8', (_) => true);
+      expect(resp.text, contains('40'));
     });
   });
 }

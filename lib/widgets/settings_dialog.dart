@@ -37,12 +37,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
   List<String> _authorizedApps = [];
 
   final List<String> _popularNames = [
+    "Nova",
     "Jarvis",
     "Siri",
     "Viernes",
     "Aura",
     "Sofía",
-    "Asistente",
   ];
 
   @override
