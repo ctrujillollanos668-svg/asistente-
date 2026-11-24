@@ -9,6 +9,7 @@ import '../services/permission_service.dart';
 import '../services/preferences_service.dart';
 import '../services/speech_service.dart';
 import '../services/update_service.dart';
+import '../services/nova_api_service.dart';
 import '../widgets/action_authorization_card.dart';
 import '../widgets/permission_sheet.dart';
 import '../widgets/settings_dialog.dart';
@@ -300,10 +301,18 @@ class _HomeScreenState extends State<HomeScreen> {
     _scrollToBottom();
 
     // 2. Procesar con el cerebro del asistente verificando permisos permanentes
-    final brainResponse = _brain.processInput(
+    var brainResponse = _brain.processInput(
       cleanInput,
       (appName) => _appLauncher.isAppPreAuthorized(appName),
     );
+
+    // Si no es una acción local o el cerebro local no entendió, consultar al backend Python
+    if (brainResponse.action == null && (brainResponse.text == "¿Cómo?" || cleanInput.endsWith('?') || cleanInput.startsWith('cómo') || cleanInput.startsWith('como') || cleanInput.startsWith('por qué') || cleanInput.startsWith('por que'))) {
+      final backendReply = await NovaApiService.queryBackend(cleanInput, _assistantName);
+      if (backendReply != null && backendReply.isNotEmpty) {
+        brainResponse = BrainResponse(text: backendReply);
+      }
+    }
 
     // Si el usuario ordenó cambiar el nombre por voz
     if (brainResponse.newAssistantName != null) {

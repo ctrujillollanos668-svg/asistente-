@@ -1,6 +1,6 @@
 {
-  "version": "1.0.6",
-  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.6/app-release.apk",
-  "changelog": "• Asistente NOVA: interrupción inmediata en cualquier momento (para, stop, silencio o toque de pantalla).\n• Respuestas directas, concisas y naturales (1-2 oraciones, sin monólogos).\n• Apertura de cualquier app (YouTube, WhatsApp, Instagram, TikTok, Netflix, Uber, Spotify, Mapas y más).\n• Motor de conocimiento general: responde matemáticas, ciencia, historia y preguntas cotidianas.\n• Saludo rápido: '¿Qué hacemos?'.",
+  "version": "1.0.7",
+  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.7/app-release.apk",
+  "changelog": "• Conexión con servidor Python de Inteligencia Artificial para respuestas ilimitadas.\n• Asistente NOVA con interrupción total, respuestas directas y concisas.\n• Control total de aplicaciones y preguntas generales.\n• Configuración opcional de servidor de IA en Ajustes.",
   "mandatory": false
 }

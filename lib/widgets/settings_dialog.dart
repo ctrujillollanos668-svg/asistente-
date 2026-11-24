@@ -32,6 +32,7 @@ class SettingsDialog extends StatefulWidget {
 
 class _SettingsDialogState extends State<SettingsDialog> {
   late TextEditingController _nameController;
+  late TextEditingController _backendController;
   bool _backgroundListening = true;
   bool _autoListening = true;
   List<String> _authorizedApps = [];
@@ -49,6 +50,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.currentName);
+    _backendController = TextEditingController();
     _loadSettings();
   }
 
@@ -56,16 +58,19 @@ class _SettingsDialogState extends State<SettingsDialog> {
     final bg = await PreferencesService.isBackgroundListeningEnabled();
     final auto = await PreferencesService.isAutoListeningEnabled();
     final apps = await PreferencesService.getAuthorizedApps();
+    final backendUrl = await PreferencesService.getBackendUrl();
     setState(() {
       _backgroundListening = bg;
       _autoListening = auto;
       _authorizedApps = apps;
+      _backendController.text = backendUrl;
     });
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _backendController.dispose();
     super.dispose();
   }
 
@@ -75,6 +80,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
       await PreferencesService.setAssistantName(newName);
       await PreferencesService.setBackgroundListeningEnabled(_backgroundListening);
       await PreferencesService.setAutoListeningEnabled(_autoListening);
+      await PreferencesService.setBackendUrl(_backendController.text.trim());
 
       if (_backgroundListening) {
         await BackgroundVoiceService.startService(newName);
@@ -255,6 +261,40 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     },
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+
+              const Divider(color: Color(0xFF334155)),
+              const SizedBox(height: 12),
+
+              // Servidor Backend de IA (Python)
+              const Text(
+                "Servidor de IA (Backend Python)",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "Opcional: Si tienes tu servidor Python en la nube o local, pon la URL aquí para respuestas con IA ilimitada.",
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 11.5),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111420),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: TextField(
+                  controller: _backendController,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.cloud_queue_rounded, color: Color(0xFF00F2FE), size: 20),
+                    hintText: "Ejemplo: https://mi-backend.onrender.com",
+                    hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
 

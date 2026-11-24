@@ -93,4 +93,18 @@ class PreferencesService {
     final prefs = await _instance;
     await prefs.setBool(_keyMicPermissionGranted, true);
   }
+
+  static const String _keyBackendUrl = 'backend_url';
+
+  /// Obtiene la URL del servidor backend Python (si está configurada)
+  static Future<String> getBackendUrl() async {
+    final prefs = await _instance;
+    return prefs.getString(_keyBackendUrl) ?? '';
+  }
+
+  /// Guarda la URL del servidor backend Python
+  static Future<void> setBackendUrl(String url) async {
+    final prefs = await _instance;
+    await prefs.setString(_keyBackendUrl, url.trim());
+  }
 }
