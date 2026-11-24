@@ -276,6 +276,7 @@ class _ActionAuthorizationCardState extends State<ActionAuthorizationCard> {
       case ActionType.camera:
         return Icons.camera_alt_rounded;
       case ActionType.maps:
+      case ActionType.waze:
         return Icons.map_rounded;
       case ActionType.browser:
         return Icons.language_rounded;
@@ -283,6 +284,42 @@ class _ActionAuthorizationCardState extends State<ActionAuthorizationCard> {
         return Icons.phone_rounded;
       case ActionType.email:
         return Icons.email_rounded;
+      case ActionType.instagram:
+        return Icons.camera_rounded;
+      case ActionType.facebook:
+        return Icons.facebook_rounded;
+      case ActionType.tiktok:
+        return Icons.video_library_rounded;
+      case ActionType.twitter:
+        return Icons.alternate_email_rounded;
+      case ActionType.telegram:
+        return Icons.send_rounded;
+      case ActionType.netflix:
+        return Icons.movie_rounded;
+      case ActionType.snapchat:
+        return Icons.photo_camera_front_rounded;
+      case ActionType.pinterest:
+        return Icons.dashboard_rounded;
+      case ActionType.linkedin:
+        return Icons.business_rounded;
+      case ActionType.uber:
+        return Icons.local_taxi_rounded;
+      case ActionType.calculator:
+        return Icons.calculate_rounded;
+      case ActionType.settings:
+        return Icons.settings_rounded;
+      case ActionType.gallery:
+        return Icons.photo_library_rounded;
+      case ActionType.clock:
+        return Icons.access_time_rounded;
+      case ActionType.calendar:
+        return Icons.calendar_month_rounded;
+      case ActionType.contacts:
+        return Icons.contacts_rounded;
+      case ActionType.fileManager:
+        return Icons.folder_rounded;
+      case ActionType.notes:
+        return Icons.note_rounded;
       case ActionType.generalApp:
         return Icons.apps_rounded;
     }

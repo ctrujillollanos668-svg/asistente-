@@ -8,6 +8,26 @@ enum ActionType {
   dialer,
   email,
   generalApp,
+  // ── Nuevas apps avanzadas ──
+  instagram,
+  facebook,
+  tiktok,
+  twitter,
+  telegram,
+  netflix,
+  calculator,
+  settings,
+  gallery,
+  clock,
+  calendar,
+  contacts,
+  fileManager,
+  notes,
+  snapchat,
+  pinterest,
+  linkedin,
+  uber,
+  waze,
 }
 
 enum AuthorizationStatus {

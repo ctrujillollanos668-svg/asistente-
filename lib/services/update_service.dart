@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppUpdateInfo {
   final String currentVersion;
@@ -26,14 +27,35 @@ class UpdateService {
   static const String defaultCheckUrl =
       "https://raw.githubusercontent.com/ctrujillollanos668-svg/asistente-/main/version.json";
 
+  static const String _keySkipVersion = 'update_skip_version';
+
   /// Obtiene la versión actual instalada en el dispositivo
   static Future<String> getCurrentVersion() async {
     final packageInfo = await PackageInfo.fromPlatform();
     return packageInfo.version;
   }
 
+  /// Marca que una versión ya fue instalada (el instalador se lanzó con éxito)
+  /// para que no se vuelva a ofrecer la misma actualización.
+  static Future<void> markVersionInstalled(String version) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySkipVersion, version);
+  }
+
+  /// Revisa si una versión ya fue instalada/descargada
+  static Future<String?> getSkippedVersion() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keySkipVersion);
+  }
+
+  /// Limpia la marca de versión saltada (útil al actualizar la app real)
+  static Future<void> clearSkippedVersion() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keySkipVersion);
+  }
+
   /// Consulta si existe una versión más reciente
-  static Future<AppUpdateInfo?> checkForUpdate({String? updateUrl}) async {
+  static Future<AppUpdateInfo?> checkForUpdate({String? updateUrl, bool ignoreSkipped = false}) async {
     try {
       final currentVersion = await getCurrentVersion();
       final url = Uri.parse(updateUrl ?? defaultCheckUrl);
@@ -46,7 +68,27 @@ class UpdateService {
         final changelog = (data['changelog'] ?? 'Mejoras y corrección de errores.').toString();
         final mandatory = (data['mandatory'] ?? false) as bool;
 
+        // Comparar con la versión real del APK instalado
         final hasUpdate = _isVersionGreater(latestVersion, currentVersion);
+
+        // Si ya se instaló/descargó esta versión y no es una verificación manual forzada, no molestar
+        if (hasUpdate && !ignoreSkipped) {
+          final skipped = await getSkippedVersion();
+          if (skipped == latestVersion) {
+            // Ya se descargó e instaló (o se lanzó el instalador). No molestar.
+            return AppUpdateInfo(
+              currentVersion: currentVersion,
+              latestVersion: latestVersion,
+              apkUrl: apkUrl,
+              changelog: changelog,
+              hasUpdate: false, // ← Ya se gestionó
+              isMandatory: mandatory,
+            );
+          }
+        } else if (!hasUpdate) {
+          // Si la versión actual ya es igual o mayor, limpiar cualquier marca vieja
+          await clearSkippedVersion();
+        }
 
         return AppUpdateInfo(
           currentVersion: currentVersion,
@@ -66,6 +108,7 @@ class UpdateService {
   /// Descarga el APK e inicia la instalación automática sobre la app actual
   static void downloadAndInstallApk({
     required String apkUrl,
+    required String targetVersion,
     required Function(int progress) onProgress,
     required Function() onInstalling,
     required Function(String errorMessage) onError,
@@ -80,7 +123,15 @@ class UpdateService {
               break;
 
             case OtaStatus.INSTALLING:
+              // Marcar la versión como "ya gestionada" cuando el sistema
+              // abre el instalador. Así, si el usuario vuelve a la app
+              // antes de que Android termine, no le vuelve a salir el diálogo.
+              markVersionInstalled(targetVersion);
+              onInstalling();
+              break;
+
             case OtaStatus.INSTALLATION_DONE:
+              markVersionInstalled(targetVersion);
               onInstalling();
               break;
 

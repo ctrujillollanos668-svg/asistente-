@@ -50,5 +50,29 @@ void main() {
       expect(resp.action!.type, equals(ActionType.dialer));
       expect(resp.action!.payload, equals('Mamá'));
     });
+
+    test('Comando para abrir Instagram', () {
+      final resp = brain.processInput('abre Instagram', (_) => true);
+      expect(resp.action, isNotNull);
+      expect(resp.action!.type, equals(ActionType.instagram));
+    });
+
+    test('Comando para abrir TikTok', () {
+      final resp = brain.processInput('abre TikTok', (_) => true);
+      expect(resp.action, isNotNull);
+      expect(resp.action!.type, equals(ActionType.tiktok));
+    });
+
+    test('Comando para abrir Netflix', () {
+      final resp = brain.processInput('inicia Netflix', (_) => true);
+      expect(resp.action, isNotNull);
+      expect(resp.action!.type, equals(ActionType.netflix));
+    });
+
+    test('Comando de ayuda / qué puedes hacer', () {
+      final resp = brain.processInput('qué puedes hacer', (_) => true);
+      expect(resp.text, contains('Redes Sociales'));
+      expect(resp.text, contains('WhatsApp'));
+    });
   });
 }

@@ -1,6 +1,6 @@
 {
-  "version": "1.0.4",
-  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.4/app-release.apk",
-  "changelog": "• Instalación 100% limpia sin advertencias de Play Protect.\n• Apertura inteligente de WhatsApp con mensaje listo para enviar con 1 toque.\n• Solución definitiva para el instalador en teléfonos Xiaomi y Android.\n• Recuperación continua de micrófono y conversación por turnos.",
+  "version": "1.0.5",
+  "apkUrl": "https://github.com/ctrujillollanos668-svg/asistente-/releases/download/v1.0.5/app-release.apk",
+  "changelog": "• Asistente avanzado: ahora abre CUALQUIER app (Instagram, TikTok, Facebook, Netflix, Telegram, Uber, Calculadora, Galería y +20 más).\n• Sistema de actualizaciones arreglado: ya no muestra 'hay actualización' después de actualizar.\n• Respuestas más bacanas y naturales con emojis.\n• Comando de ayuda: di '¿Qué puedes hacer?' para ver todas las funciones.\n• Mejor experiencia para el cliente.",
   "mandatory": false
 }

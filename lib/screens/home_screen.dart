@@ -40,10 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
   List<String> get _quickSuggestions => [
         "Oye $_assistantName",
         "Abrir WhatsApp",
+        "Abrir Instagram",
         "Pon música en YouTube",
+        "Abrir TikTok",
         "Abrir la Cámara",
         "¿Qué hora es?",
-        "Abrir Google Maps",
+        "Abrir Netflix",
+        "¿Qué puedes hacer?",
         "Cuéntame un chiste",
       ];
 
@@ -127,7 +130,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _addInitialAssistantMessage(String name) {
     final welcome = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: "¡Hola! Soy **$name**, tu asistente móvil inteligente. ✨\n\nPuedes llamarme diciendo «Oye $name» o tocar el orbe. Las autorizaciones solo se te pedirán una sola vez.",
+      text: "¡Qué más! Soy **$name**, tu asistente móvil avanzado. 🚀✨\n\n"
+          "Puedo abrir **cualquier app** de tu teléfono: WhatsApp, Instagram, TikTok, YouTube, Spotify, Netflix, Facebook, Telegram, Cámara, Mapas, y muchas más.\n\n"
+          "Solo dime «Oye $name» o toca el orbe. Las autorizaciones solo se piden una vez. ¡Pregúntame «¿Qué puedes hacer?» para ver todo! 🔥",
       isUser: false,
       timestamp: DateTime.now(),
     );
@@ -150,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: Duration(seconds: 1),
       ),
     );
-    final updateInfo = await UpdateService.checkForUpdate();
+    final updateInfo = await UpdateService.checkForUpdate(ignoreSkipped: true);
     if (!mounted) return;
 
     if (updateInfo != null && updateInfo.hasUpdate) {

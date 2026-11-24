@@ -58,6 +58,91 @@ class AppLauncherService {
         case ActionType.email:
           return await _launchEmail(action.payload);
 
+        case ActionType.instagram:
+          return await _launchByPackageOrStore(
+            'com.instagram.android', 'instagram://', action.payload,
+            webFallback: 'https://www.instagram.com/',
+          );
+
+        case ActionType.facebook:
+          return await _launchByPackageOrStore(
+            'com.facebook.katana', 'fb://', action.payload,
+            webFallback: 'https://www.facebook.com/',
+          );
+
+        case ActionType.tiktok:
+          return await _launchByPackageOrStore(
+            'com.zhiliaoapp.musically', 'snssdk1233://', action.payload,
+            webFallback: 'https://www.tiktok.com/',
+          );
+
+        case ActionType.twitter:
+          return await _launchByPackageOrStore(
+            'com.twitter.android', 'twitter://', action.payload,
+            webFallback: 'https://x.com/',
+          );
+
+        case ActionType.telegram:
+          return await _launchByPackageOrStore(
+            'org.telegram.messenger', 'tg://', action.payload,
+          );
+
+        case ActionType.netflix:
+          return await _launchByPackageOrStore(
+            'com.netflix.mediaclient', 'nflx://', action.payload,
+          );
+
+        case ActionType.snapchat:
+          return await _launchByPackageOrStore(
+            'com.snapchat.android', 'snapchat://', action.payload,
+          );
+
+        case ActionType.pinterest:
+          return await _launchByPackageOrStore(
+            'com.pinterest', 'pinterest://', action.payload,
+            webFallback: 'https://www.pinterest.com/',
+          );
+
+        case ActionType.linkedin:
+          return await _launchByPackageOrStore(
+            'com.linkedin.android', 'linkedin://', action.payload,
+            webFallback: 'https://www.linkedin.com/',
+          );
+
+        case ActionType.uber:
+          return await _launchByPackageOrStore(
+            'com.ubercab', 'uber://', action.payload,
+          );
+
+        case ActionType.waze:
+          return await _launchByPackageOrStore(
+            'com.waze', 'waze://', action.payload,
+          );
+
+        case ActionType.calculator:
+          return await _launchByPackage('com.google.android.calculator', 'calculator://');
+
+        case ActionType.settings:
+          return await _launchByPackage('com.android.settings', 'settings://');
+
+        case ActionType.gallery:
+          return await _launchGallery();
+
+        case ActionType.clock:
+          return await _launchByPackage('com.google.android.deskclock', 'clock://');
+
+        case ActionType.calendar:
+          return await _launchByPackage('com.google.android.calendar', 'content://com.android.calendar');
+
+        case ActionType.contacts:
+          return await _launchByPackage('com.google.android.contacts', 'content://contacts');
+
+        case ActionType.fileManager:
+          return await _launchByPackage('com.google.android.apps.nbu.files', 'content://com.android.externalstorage');
+
+        case ActionType.notes:
+          return await _launchByPackage('com.google.android.keep', 'keep://');
+
         case ActionType.generalApp:
           return await _launchGeneralApp(action.packageName);
       }
@@ -118,6 +203,27 @@ class AppLauncherService {
     }
   }
 
+  Future<bool> _launchGallery() async {
+    try {
+      await LaunchApp.openApp(
+        androidPackageName: 'com.google.android.apps.photos',
+        iosUrlScheme: 'photos-redirect://',
+        openStore: false,
+      );
+      return true;
+    } catch (_) {
+      try {
+        await LaunchApp.openApp(
+          androidPackageName: 'com.miui.gallery',
+          openStore: false,
+        );
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+  }
+
   Future<bool> _launchMaps(String? location) async {
     String query = location ?? "";
     final uri = Uri.parse("geo:0,0?q=${Uri.encodeComponent(query)}");
@@ -151,6 +257,29 @@ class AppLauncherService {
       return await launchUrl(uri);
     }
     return false;
+  }
+
+  /// Intenta abrir por paquete, si falla intenta web fallback
+  Future<bool> _launchByPackageOrStore(
+    String packageName,
+    String iosScheme,
+    String? payload, {
+    String? webFallback,
+  }) async {
+    try {
+      await LaunchApp.openApp(
+        androidPackageName: packageName,
+        iosUrlScheme: iosScheme,
+        openStore: false,
+      );
+      return true;
+    } catch (_) {
+      if (webFallback != null) {
+        final uri = Uri.parse(webFallback);
+        return await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      return false;
+    }
   }
 
   Future<bool> _launchGeneralApp(String packageName) async {

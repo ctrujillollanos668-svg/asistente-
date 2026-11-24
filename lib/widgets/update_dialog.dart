@@ -38,6 +38,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
 
     UpdateService.downloadAndInstallApk(
       apkUrl: widget.updateInfo.apkUrl,
+      targetVersion: widget.updateInfo.latestVersion,
       onProgress: (percent) {
         if (!mounted) return;
         setState(() {
@@ -48,7 +49,14 @@ class _UpdateDialogState extends State<UpdateDialog> {
       onInstalling: () {
         if (!mounted) return;
         setState(() {
-          _statusMessage = "Preparando instalación sobre la versión actual...";
+          _downloadProgress = 100;
+          _statusMessage = "¡Listo! Instalando actualización... La app se reiniciará.";
+        });
+        // Cerrar el diálogo automáticamente tras 2 segundos
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
         });
       },
       onError: (error) {
