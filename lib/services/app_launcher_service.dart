@@ -28,6 +28,7 @@ class AppLauncherService {
   Future<void> revokeAuthorization(String appName) async {
     _rememberedAuthorizations.remove(appName.toLowerCase());
     await PreferencesService.revokeApp(appName);
+    
   }
 
   /// Ejecuta la acción en la aplicación solicitada

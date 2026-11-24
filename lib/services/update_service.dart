@@ -114,7 +114,8 @@ class UpdateService {
     required Function(String errorMessage) onError,
   }) {
     try {
-      OtaUpdate().execute(apkUrl, destinationFilename: 'asistente_update.apk').listen(
+      final safeFilename = "asistente_v${targetVersion.replaceAll('.', '_')}.apk";
+      OtaUpdate().execute(apkUrl, destinationFilename: safeFilename).listen(
         (OtaEvent event) {
           switch (event.status) {
             case OtaStatus.DOWNLOADING:
