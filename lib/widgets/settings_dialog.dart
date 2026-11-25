@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/background_voice_service.dart';
 import '../services/preferences_service.dart';
+import '../services/code_push_service.dart';
 
 class SettingsDialog extends StatefulWidget {
   final String currentName;
@@ -46,6 +47,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
     "Sofía",
   ];
 
+  int? _patchNumber;
+
   @override
   void initState() {
     super.initState();
@@ -59,11 +62,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
     final auto = await PreferencesService.isAutoListeningEnabled();
     final apps = await PreferencesService.getAuthorizedApps();
     final backendUrl = await PreferencesService.getBackendUrl();
+    final patch = await CodePushService.getCurrentPatchNumber();
     setState(() {
       _backgroundListening = bg;
       _autoListening = auto;
       _authorizedApps = apps;
       _backendController.text = backendUrl;
+      _patchNumber = patch;
     });
   }
 
@@ -329,6 +334,33 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   }).toList(),
                 ),
               const SizedBox(height: 24),
+
+              // Estado de Shorebird Code Push
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E2230),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.bolt_rounded, color: Color(0xFF00F2FE), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        CodePushService.isAvailable
+                            ? (_patchNumber != null
+                                ? "Code Push: Parche #$_patchNumber activo"
+                                : "Code Push: Activo (Versión base)")
+                            : "Code Push: Activo vía Shorebird",
+                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
 
               // Botones Guardar / Cancelar
               Row(

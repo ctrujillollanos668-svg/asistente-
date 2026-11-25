@@ -10,6 +10,7 @@ import '../services/preferences_service.dart';
 import '../services/speech_service.dart';
 import '../services/update_service.dart';
 import '../services/nova_api_service.dart';
+import '../services/code_push_service.dart';
 import '../widgets/action_authorization_card.dart';
 import '../widgets/permission_sheet.dart';
 import '../widgets/settings_dialog.dart';
@@ -56,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     initializeDateFormatting('es_ES', null);
     _initServices();
+    CodePushService.syncInBackground();
     _checkSilentUpdate();
   }
 
